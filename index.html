@@ -69,6 +69,9 @@
   document.addEventListener('visibilitychange', function(){ if (document.hidden) left(); });
 
   function go(url){ try { location.href = url; } catch(e) {} }
+  // прыжок в приложение — только после полной загрузки страницы: иначе часть браузеров
+  // обрывает загрузку и человек видит пустой экран
+  function after(fn){ if (document.readyState === 'complete') setTimeout(fn, 50); else window.addEventListener('load', function(){ setTimeout(fn, 50); }); }
 
   if (test) {
     document.getElementById('test').style.display = 'block';
@@ -81,11 +84,11 @@
       var auto = q.get('auto') !== '0';
       var note = document.createElement('p'); note.innerHTML = auto ? '<b>Автопопытка при загрузке:</b> идёт…' : 'Автопопытка выключена (auto=0)';
       document.getElementById('test').prepend(note);
-      if (auto) { go(app); setTimeout(function(){ note.innerHTML = '<b>Автопопытка при загрузке:</b> ' + ((gone||document.hidden) ? 'похоже, сработала (страница уходила в фон)' : 'НЕ сработала — приложение не открылось само'); }, 2500); }
+      if (auto) { after(function(){ go(app); }); setTimeout(function(){ note.innerHTML = '<b>Автопопытка при загрузке:</b> ' + ((gone||document.hidden) ? 'похоже, сработала (страница уходила в фон)' : 'НЕ сработала — приложение не открылось само'); }, 2500); }
     }
   } else if (ios || android) {
     // автопопытка при загрузке; если через 2.5 с всё ещё здесь — уводим на сайт
-    go(app);
+    after(function(){ go(app); });
     setTimeout(function(){ if (!gone && !document.hidden) go(web); }, 2500);
   } else {
     location.replace(web);
