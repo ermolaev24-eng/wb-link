@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="apple-itunes-app" content="app-id=597880187">
+<title>Открываем в приложении Wildberries</title>
+<style>
+  body{margin:0;padding:24px 16px;font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#fff;color:#111;text-align:center}
+  h1{font-size:20px;margin:24px 0 8px}
+  p{color:#555;margin:0 0 20px}
+  .btn{display:block;width:100%;box-sizing:border-box;margin:10px 0;padding:14px;border-radius:14px;background:#cb11ab;color:#fff;text-decoration:none;font-weight:600;font-size:16px}
+  .btn.alt{background:#f2f2f2;color:#111}
+  .art{font-size:13px;color:#888;margin-top:24px}
+  #test{display:none;text-align:left;margin-top:28px;border-top:1px solid #eee;padding-top:16px}
+  #test .btn{font-size:14px;padding:12px}
+  code{font-size:12px;color:#888;display:block;word-break:break-all}
+</style>
+</head>
+<body>
+<h1>Открываем в приложении Wildberries…</h1>
+<p>Если приложение не открылось само — нажмите кнопку.</p>
+<a id="open" class="btn" href="#">Открыть в приложении WB</a>
+<a id="web" class="btn alt" href="#">Открыть на сайте</a>
+<div class="art" id="art"></div>
+
+<div id="test">
+  <p><b>Тест: нажимай по очереди, запомни букву той кнопки, что открыла приложение НА КАРТОЧКЕ товара.</b></p>
+  <a class="btn" id="tA" href="#">A — scheme, путь карточки</a><code id="cA"></code>
+  <a class="btn" id="tB" href="#">B — scheme с доменом</a><code id="cB"></code>
+  <a class="btn" id="tC" href="#">C — обычная https-ссылка (тап)</a><code id="cC"></code>
+  <a class="btn" id="tD" href="#">D — Android intent</a><code id="cD"></code>
+  <a class="btn" id="tE" href="#">E — голый wildberries:// (как у WB)</a><code id="cE"></code>
+  <a class="btn" id="tF" href="#">F — scheme product?nm=</a><code id="cF"></code>
+  <p id="env"></p>
+</div>
+
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var nm = (q.get('nm') || '').replace(/\D/g,'');
+  var test = q.get('test') === '1';
+  if (!nm) { document.body.innerHTML = '<h1>Нет артикула</h1>'; return; }
+  var path = 'catalog/' + nm + '/detail.aspx';
+  var web = 'https://www.wildberries.ru/' + path;
+  var ua = navigator.userAgent;
+  var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var android = /Android/i.test(ua);
+  var links = {
+    A: 'wildberries://' + path,
+    B: 'wildberries://www.wildberries.ru/' + path,
+    C: web,
+    D: 'intent://www.wildberries.ru/' + path + '#Intent;scheme=https;package=com.wildberries.ru;S.browser_fallback_url=' + encodeURIComponent(web) + ';end',
+    E: 'wildberries://',
+    F: 'wildberries://product?nm=' + nm
+  };
+  var app = android ? links.D : links.A;
+
+  document.getElementById('art').textContent = 'Артикул ' + nm;
+  document.getElementById('web').href = web;
+  var openBtn = document.getElementById('open');
+  openBtn.href = app;
+
+  var gone = false;
+  function left(){ gone = true; }
+  window.addEventListener('pagehide', left);
+  window.addEventListener('blur', left);
+  document.addEventListener('visibilitychange', function(){ if (document.hidden) left(); });
+
+  function go(url){ try { location.href = url; } catch(e) {} }
+
+  if (test) {
+    document.getElementById('test').style.display = 'block';
+    ['A','B','C','D','E','F'].forEach(function(k){
+      var a = document.getElementById('t'+k); a.href = links[k];
+      document.getElementById('c'+k).textContent = links[k];
+    });
+    document.getElementById('env').textContent = (ios?'iOS':android?'Android':'?') + ' · ' + ua;
+    if (ios || android) {
+      var auto = q.get('auto') !== '0';
+      var note = document.createElement('p'); note.innerHTML = auto ? '<b>Автопопытка при загрузке:</b> идёт…' : 'Автопопытка выключена (auto=0)';
+      document.getElementById('test').prepend(note);
+      if (auto) { go(app); setTimeout(function(){ note.innerHTML = '<b>Автопопытка при загрузке:</b> ' + ((gone||document.hidden) ? 'похоже, сработала (страница уходила в фон)' : 'НЕ сработала — приложение не открылось само'); }, 2500); }
+    }
+  } else if (ios || android) {
+    // автопопытка при загрузке; если через 2.5 с всё ещё здесь — уводим на сайт
+    go(app);
+    setTimeout(function(){ if (!gone && !document.hidden) go(web); }, 2500);
+  } else {
+    location.replace(web);
+  }
+})();
+</script>
+</body>
+</html>
