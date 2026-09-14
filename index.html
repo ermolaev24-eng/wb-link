@@ -5,28 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <meta name="apple-itunes-app" content="app-id=597880187">
-<title>Открываем в приложении Wildberries</title>
+<title>Карточка товара на Wildberries</title>
 <style>
-  body{margin:0;padding:24px 16px;font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#fff;color:#111;text-align:center}
-  h1{font-size:20px;margin:24px 0 8px}
-  p{color:#555;margin:0 0 20px}
-  .btn{display:block;width:100%;box-sizing:border-box;margin:10px 0;padding:14px;border-radius:14px;background:#cb11ab;color:#fff;text-decoration:none;font-weight:600;font-size:16px}
-  .btn.alt{background:#f2f2f2;color:#111}
-  .art{font-size:13px;color:#888;margin-top:24px}
+  body{margin:0;padding:32px 20px;font:17px/1.45 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;background:#fff;color:#111;text-align:center}
+  h1{font-size:22px;margin:16px 0 6px}
+  p{color:#666;margin:0 0 22px}
+  .btn{display:block;width:100%;box-sizing:border-box;margin:12px 0;padding:18px;border-radius:16px;background:#cb11ab;color:#fff;text-decoration:none;font-weight:700;font-size:19px}
+  .btn.alt{background:#f2f2f2;color:#111;font-weight:500;font-size:15px;padding:14px}
+  .art{font-size:14px;color:#999;margin-top:18px}
+  .hint{font-size:13px;color:#999;margin-top:28px}
   #test{display:none;text-align:left;margin-top:28px;border-top:1px solid #eee;padding-top:16px}
   #test .btn{font-size:14px;padding:12px}
   code{font-size:12px;color:#888;display:block;word-break:break-all}
 </style>
 </head>
 <body>
-<h1>Открываем в приложении Wildberries…</h1>
-<p>Если приложение не открылось само — нажмите кнопку.</p>
-<a id="open" class="btn" href="#">Открыть в приложении WB</a>
-<a id="web" class="btn alt" href="#">Открыть на сайте</a>
+<div style="font-size:44px;line-height:1">🛍️</div>
+<h1>Карточка товара на Wildberries</h1>
+<p>Нажмите — откроется в приложении Wildberries.</p>
+<a id="open" class="btn" href="https://www.wildberries.ru/">Открыть в приложении Wildberries</a>
+<a id="intent" class="btn alt" href="#" style="display:none">Не открылось? Открыть приложение</a>
 <div class="art" id="art"></div>
+<div class="hint">Если приложения нет — откроется сайт Wildberries.</div>
 
 <div id="test">
-  <p><b>Тест: нажимай по очереди, запомни букву той кнопки, что открыла приложение НА КАРТОЧКЕ товара.</b></p>
+  <p><b>Тест:</b> какая кнопка открыла приложение НА КАРТОЧКЕ товара.</p>
   <a class="btn" id="tA" href="#">A — scheme, путь карточки</a><code id="cA"></code>
   <a class="btn" id="tB" href="#">B — scheme с доменом</a><code id="cB"></code>
   <a class="btn" id="tC" href="#">C — обычная https-ссылка (тап)</a><code id="cC"></code>
@@ -38,60 +41,34 @@
 
 <script>
 (function(){
+  // Зачем эта страница. Из встроенного браузера Pinterest (и Instagram, Telegram) ссылка на
+  // wildberries.ru грузится ПРОГРАММНО, а Universal/App Links срабатывают только на ТАП человека —
+  // поэтому карточка открывается в веб-версии, а кнопка «Открыть в приложении» самого WB шлёт
+  // голый wildberries:// и теряет товар. Проверено с телефона 14.09.2026: автопрыжок (JS) из
+  // Pinterest не работает, тап по обычной https-ссылке открывает приложение НА КАРТОЧКЕ.
+  // Отсюда одна кнопка — настоящий <a href="https://…"> без JS-обработчика. Не «улучшать» её
+  // автопереходом: он не сработает, а в некоторых браузерах покажет ошибку.
   var q = new URLSearchParams(location.search);
   var nm = (q.get('nm') || '').replace(/\D/g,'');
-  var test = q.get('test') === '1';
-  if (!nm) { document.body.innerHTML = '<h1>Нет артикула</h1>'; return; }
+  if (!nm) { location.replace('https://www.wildberries.ru/'); return; }
   var path = 'catalog/' + nm + '/detail.aspx';
   var web = 'https://www.wildberries.ru/' + path;
   var ua = navigator.userAgent;
   var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var android = /Android/i.test(ua);
-  var links = {
-    A: 'wildberries://' + path,
-    B: 'wildberries://www.wildberries.ru/' + path,
-    C: web,
-    D: 'intent://www.wildberries.ru/' + path + '#Intent;scheme=https;package=com.wildberries.ru;S.browser_fallback_url=' + encodeURIComponent(web) + ';end',
-    E: 'wildberries://',
-    F: 'wildberries://product?nm=' + nm
-  };
-  var app = android ? links.D : links.A;
+  var intent = 'intent://www.wildberries.ru/' + path + '#Intent;scheme=https;package=com.wildberries.ru;S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
 
+  if (!ios && !android) { location.replace(web); return; }   // с компьютера приложения нет — сразу карточка
+
+  document.getElementById('open').href = web;
   document.getElementById('art').textContent = 'Артикул ' + nm;
-  document.getElementById('web').href = web;
-  var openBtn = document.getElementById('open');
-  openBtn.href = app;
+  if (android) { var i = document.getElementById('intent'); i.href = intent; i.style.display = 'block'; }
 
-  var gone = false;
-  function left(){ gone = true; }
-  window.addEventListener('pagehide', left);
-  window.addEventListener('blur', left);
-  document.addEventListener('visibilitychange', function(){ if (document.hidden) left(); });
-
-  function go(url){ try { location.href = url; } catch(e) {} }
-  // прыжок в приложение — только после полной загрузки страницы: иначе часть браузеров
-  // обрывает загрузку и человек видит пустой экран
-  function after(fn){ if (document.readyState === 'complete') setTimeout(fn, 50); else window.addEventListener('load', function(){ setTimeout(fn, 50); }); }
-
-  if (test) {
+  if (q.get('test') === '1') {
+    var links = { A: 'wildberries://' + path, B: 'wildberries://www.wildberries.ru/' + path, C: web, D: intent, E: 'wildberries://', F: 'wildberries://product?nm=' + nm };
     document.getElementById('test').style.display = 'block';
-    ['A','B','C','D','E','F'].forEach(function(k){
-      var a = document.getElementById('t'+k); a.href = links[k];
-      document.getElementById('c'+k).textContent = links[k];
-    });
-    document.getElementById('env').textContent = (ios?'iOS':android?'Android':'?') + ' · ' + ua;
-    if (ios || android) {
-      var auto = q.get('auto') !== '0';
-      var note = document.createElement('p'); note.innerHTML = auto ? '<b>Автопопытка при загрузке:</b> идёт…' : 'Автопопытка выключена (auto=0)';
-      document.getElementById('test').prepend(note);
-      if (auto) { after(function(){ go(app); }); setTimeout(function(){ note.innerHTML = '<b>Автопопытка при загрузке:</b> ' + ((gone||document.hidden) ? 'похоже, сработала (страница уходила в фон)' : 'НЕ сработала — приложение не открылось само'); }, 2500); }
-    }
-  } else if (ios || android) {
-    // автопопытка при загрузке; если через 2.5 с всё ещё здесь — уводим на сайт
-    after(function(){ go(app); });
-    setTimeout(function(){ if (!gone && !document.hidden) go(web); }, 2500);
-  } else {
-    location.replace(web);
+    Object.keys(links).forEach(function(k){ document.getElementById('t'+k).href = links[k]; document.getElementById('c'+k).textContent = links[k]; });
+    document.getElementById('env').textContent = (ios ? 'iOS' : 'Android') + ' · ' + ua;
   }
 })();
 </script>
