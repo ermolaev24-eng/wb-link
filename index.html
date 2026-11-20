@@ -67,6 +67,13 @@
 
   document.getElementById('open').href = web;
   document.getElementById('art').textContent = code ? 'Код на WB: ' + code : 'Артикул ' + nm;
+  // t — название товара (сторис Instagram, 20.11.2026): человек видит, что откроет. Только текст, не разметка.
+  var t = (q.get('t') || '').trim().slice(0, 80);
+  if (t) {
+    document.querySelector('h1').textContent = t;
+    document.title = t + ' — Wildberries';
+    document.querySelector('p').textContent = 'Нажмите — откроется в приложении Wildberries.';
+  }
   if (android) { var i = document.getElementById('intent'); i.href = intent; i.style.display = 'block'; }
 
   if (q.get('test') === '1') {
