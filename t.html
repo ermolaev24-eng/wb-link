@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Проверка перехода</title>
+<style>body{margin:0;padding:40px 20px;font:18px/1.4 system-ui,sans-serif;text-align:center}</style>
+</head>
+<body>
+<p id="s">Проверка: открываю приложение…</p>
+<script>
+// Проверка 20.11.2026: передаёт ли встроенный браузер Instagram (Android) переход intent:// системе БЕЗ нажатия.
+// Цель — приложение, которое стоит на проверочном телефоне (TikTok); механизм тот же, что для приложения WB.
+(function(){
+  var q = new URLSearchParams(location.search);
+  var pkg = q.get('pkg') || 'com.zhiliaoapp.musically';
+  var host = q.get('host') || 'www.tiktok.com/@ermolita_studio';
+  var intent = 'intent://' + host + '#Intent;scheme=https;package=' + pkg + ';end';
+  document.getElementById('s').textContent = 'Проверка: ' + intent;
+  location.href = intent;
+})();
+</script>
+</body>
+</html>
