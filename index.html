@@ -48,10 +48,15 @@
   // Pinterest не работает, тап по обычной https-ссылке открывает приложение НА КАРТОЧКЕ.
   // Отсюда одна кнопка — настоящий <a href="https://…"> без JS-обработчика. Не «улучшать» её
   // автопереходом: он не сработает, а в некоторых браузерах покажет ошибку.
+  // 20.11.2026: кроме номера товара — подменный код WB («WW1180930»). Код открывается поиском WB:
+  // ровно эту ссылку кабинет выдаёт для подменного артикула, и переход засчитывается коду. Путь
+  // /catalog/* приложение WB забирает себе (apple-app-site-association, Android — все адреса).
   var q = new URLSearchParams(location.search);
-  var nm = (q.get('nm') || '').replace(/\D/g,'');
-  if (!nm) { location.replace('https://www.wildberries.ru/'); return; }
-  var path = 'catalog/' + nm + '/detail.aspx';
+  var raw = (q.get('nm') || '').trim();
+  var code = /^ww\d+$/i.test(raw) ? 'WW' + raw.replace(/\D/g,'') : '';
+  var nm = code ? '' : raw.replace(/\D/g,'');
+  if (!nm && !code) { location.replace('https://www.wildberries.ru/'); return; }
+  var path = code ? 'catalog/0/search.aspx?search=' + code : 'catalog/' + nm + '/detail.aspx';
   var web = 'https://www.wildberries.ru/' + path;
   var ua = navigator.userAgent;
   var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -61,11 +66,11 @@
   if (!ios && !android) { location.replace(web); return; }   // с компьютера приложения нет — сразу карточка
 
   document.getElementById('open').href = web;
-  document.getElementById('art').textContent = 'Артикул ' + nm;
+  document.getElementById('art').textContent = code ? 'Код на WB: ' + code : 'Артикул ' + nm;
   if (android) { var i = document.getElementById('intent'); i.href = intent; i.style.display = 'block'; }
 
   if (q.get('test') === '1') {
-    var links = { A: 'wildberries://' + path, B: 'wildberries://www.wildberries.ru/' + path, C: web, D: intent, E: 'wildberries://', F: 'wildberries://product?nm=' + nm };
+    var links = { A: 'wildberries://' + path, B: 'wildberries://www.wildberries.ru/' + path, C: web, D: intent, E: 'wildberries://', F: 'wildberries://product?nm=' + (nm || code) };
     document.getElementById('test').style.display = 'block';
     Object.keys(links).forEach(function(k){ document.getElementById('t'+k).href = links[k]; document.getElementById('c'+k).textContent = links[k]; });
     document.getElementById('env').textContent = (ios ? 'iOS' : 'Android') + ' · ' + ua;
