@@ -68,7 +68,14 @@
   document.getElementById('open').href = web;
   document.getElementById('art').textContent = code ? 'Код на WB: ' + code : 'Артикул ' + nm;
   // t — название товара (сторис Instagram, 20.11.2026): человек видит, что откроет. Только текст, не разметка.
-  var t = (q.get('t') || '').trim().slice(0, 80);
+  // 23.11.2026: название по коду — в сторис уходит короткая ссылка ?nm=WW…; длинный ?t= в русских буквах
+  // Instagram не принимал (кнопка «Done» в окне ссылки оставалась серой). Коды — Instagram, scripts/stories.json.
+  var NAMES = {
+    WW472195: 'Бордовая кожаная юбка', WW1189382: 'Шоколадная кожаная юбка', WW1189385: 'Оливковая кожаная юбка',
+    WW1189377: 'Чёрная кожаная юбка', WW1340273: 'Зелёная лаковая юбка', WW1356817: 'Чёрная лаковая юбка',
+    WW1356819: 'Бордовая лаковая юбка', WW1340262: 'Коричневая замшевая юбка'
+  };
+  var t = (q.get('t') || NAMES[code] || '').trim().slice(0, 80);
   if (t) {
     document.querySelector('h1').textContent = t;
     document.title = t + ' — Wildberries';
